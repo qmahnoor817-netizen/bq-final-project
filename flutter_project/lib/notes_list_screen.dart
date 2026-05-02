@@ -54,9 +54,16 @@ class NotesListScreen extends StatelessWidget {
 
           final notes = snapshot.data!.docs.map((doc) => Note.fromFirestore(doc)).toList();
 
-          return ListView.separated(
+          // ... imports remain the same
+
+          // ... inside your StreamBuilder builder function ...
+
+
+
+          return ListView.builder(
+            // This ensures the list is always scrollable even if there are few notes
+            physics: const AlwaysScrollableScrollPhysics(),
             itemCount: notes.length,
-            separatorBuilder: (ctx, i) => const Divider(height: 1, thickness: 1), // Line between notes
             itemBuilder: (ctx, i) {
               final note = notes[i];
               return Dismissible(
@@ -74,42 +81,51 @@ class NotesListScreen extends StatelessWidget {
                       .doc(note.id)
                       .delete();
                 },
-                child: InkWell(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => EditNoteScreen(note: note),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          note.title, // PSYCHOLOGY, ESSAY etc
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.purple, // Highlight color
-                          ),
+                child: SizedBox(
+                  width: double.infinity, // Uniform width
+                  height: 100,            // Uniform height for all cards
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: InkWell(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => EditNoteScreen(note: note)),
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              note.title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
+                              maxLines: 1, // Only one line for title
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              note.content,
+                              style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
+                              maxLines: 1, // Only one line for content preview
+                              overflow: TextOverflow.ellipsis, // Adds "..."
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 6), // Space between title and description
-                        Text(
-                          note.content,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               );
             },
           );
+
         },
       ),
       floatingActionButton: FloatingActionButton(
