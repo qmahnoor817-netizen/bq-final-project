@@ -15,6 +15,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   var _isLogin = true;
   var _isLoading = false;
+  var _isPasswordVisible = false;
 
   void _submit() async {
     final isValid = _formKey.currentState!.validate();
@@ -66,10 +67,22 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
+                  obscureText: !_isPasswordVisible, // This toggles hide/show
                   validator: (val) =>
-                  val!.length >= 8? null : 'Min 8 characters',
+                  val!.length >= 6 ? null : 'Min 6 characters',
                 ),
                 const SizedBox(height: 24),
                 if (_isLoading)
