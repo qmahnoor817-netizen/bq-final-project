@@ -66,7 +66,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
         title: const Text('Edit Note'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete, color: Colors.red,),
             onPressed: _deleteNote,
           ),
         ],
