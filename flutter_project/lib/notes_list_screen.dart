@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:share_plus/share_plus.dart'; // #5
-import 'package:http/http.dart' as http; // #13
+import 'package:share_plus/share_plus.dart'; 
+import 'package:http/http.dart' as http;
 import '../model/note.dart';
 import 'add_note_screen.dart';
 import 'edit_note_screen.dart';
 
 class NotesListScreen extends StatefulWidget {
-  final VoidCallback toggleTheme; // Added
-  final bool isDarkMode; // Added
+  final VoidCallback toggleTheme; 
+  final bool isDarkMode; 
 
   const NotesListScreen({
     super.key,
@@ -27,7 +27,7 @@ class NotesListScreen extends StatefulWidget {
 class _NotesListScreenState extends State<NotesListScreen> {
   String _searchQuery = '';
   String _selectedTag = 'All';
-  bool _isSummarizing = false; // #13 - Removed _isDarkMode
+  bool _isSummarizing = false; 
 
   // #13 Local fallback summary - instant
   String _localSummary(String content) {
@@ -114,7 +114,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
     );
   }
 
-  // #5 Share Note - Fixed
+  // #5 Share Note 
   void _shareNote(Note note) async {
     final plainContent = _getPlainText(note.content);
     final tags = note.tags.isNotEmpty? '\n\nTags: ${note.tags.join(', ')}' : '';
@@ -145,7 +145,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser!;
 
-    return Stack( // Removed MaterialApp wrapper
+    return Stack( 
       children: [
         Scaffold(
           appBar: AppBar(
@@ -163,10 +163,10 @@ class _NotesListScreenState extends State<NotesListScreen> {
             shadowColor: Colors.black54,
             iconTheme: const IconThemeData(color: Colors.white),
             actions: [
-              IconButton( // #12
+              IconButton( 
                 icon: Icon(widget.isDarkMode? Icons.light_mode : Icons.dark_mode),
                 tooltip: 'Toggle Theme',
-                onPressed: widget.toggleTheme, // Changed
+                onPressed: widget.toggleTheme, 
               ),
               IconButton(
                 icon: const Icon(Icons.logout),
@@ -337,7 +337,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   _getPlainText(note.content),
-                                                  style: TextStyle(fontSize: 15, color: widget.isDarkMode? Colors.white70 : Colors.black87), // Changed
+                                                  style: TextStyle(fontSize: 15, color: widget.isDarkMode? Colors.white70 : Colors.black87), 
                                                   maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
