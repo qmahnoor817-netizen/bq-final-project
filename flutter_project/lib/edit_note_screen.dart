@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_quill/flutter_quill.dart' as quill; // Add this
+import 'package:flutter_quill/flutter_quill.dart' as quill; 
 import '../model/note.dart';
 
 class EditNoteScreen extends StatefulWidget {
@@ -14,16 +14,16 @@ class EditNoteScreen extends StatefulWidget {
 
 class _EditNoteScreenState extends State<EditNoteScreen> {
   late TextEditingController _titleController;
-  late quill.QuillController _quillController; // Changed from TextEditingController
+  late quill.QuillController _quillController; 
   final _formKey = GlobalKey<FormState>();
-  final _tagController = TextEditingController(); // Add this
+  final _tagController = TextEditingController(); 
   var _isLoading = false;
 
-  late int _selectedColor; // Add this
-  late List<String> _selectedTags; // Add this
-  late bool _isPinned; // Add this
+  late int _selectedColor; 
+  late List<String> _selectedTags; 
+  late bool _isPinned; 
 
-  final List<Color> _noteColors = [ // Add this
+  final List<Color> _noteColors = [ 
     Colors.white, Colors.red.shade100, Colors.orange.shade100, Colors.yellow.shade100,
     Colors.green.shade100, Colors.blue.shade100, Colors.purple.shade100, Colors.pink.shade100,
   ];
@@ -32,11 +32,11 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.note.title);
-    _selectedColor = widget.note.color; // Add this
-    _selectedTags = List.from(widget.note.tags); // Add this
-    _isPinned = widget.note.isPinned; // Add this
+    _selectedColor = widget.note.color;
+    _selectedTags = List.from(widget.note.tags); 
+    _isPinned = widget.note.isPinned; 
 
-    // Load Quill content - Add this
+    // Load Quill content 
     try {
       _quillController = quill.QuillController(
         document: quill.Document.fromJson(jsonDecode(widget.note.content)),
@@ -47,7 +47,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
     }
   }
 
-  void _addTag() { // Add this
+  void _addTag() { 
     final tag = _tagController.text.trim();
     if (tag.isNotEmpty &&!_selectedTags.contains(tag)) {
       setState(() => _selectedTags.add(tag));
@@ -59,17 +59,17 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
-    final contentJson = jsonEncode(_quillController.document.toDelta().toJson()); // Add this
+    final contentJson = jsonEncode(_quillController.document.toDelta().toJson());
 
     await FirebaseFirestore.instance
         .collection('notes')
         .doc(widget.note.id)
         .update({
       'title': _titleController.text.trim(),
-      'content': contentJson, // Changed to JSON
-      'color': _selectedColor, // Add this
-      'tags': _selectedTags, // Add this
-      'isPinned': _isPinned, // Add this
+      'content': contentJson, 
+      'color': _selectedColor, 
+      'tags': _selectedTags, 
+      'isPinned': _isPinned, 
     });
 
     if (mounted) Navigator.of(context).pop();
@@ -100,9 +100,9 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Note'), // Add this
+        title: const Text('Edit Note'), 
         actions: [
-          IconButton( // Add pin button
+          IconButton( 
             icon: Icon(_isPinned? Icons.push_pin : Icons.push_pin_outlined),
             onPressed: () => setState(() => _isPinned =!_isPinned),
           ),
@@ -125,13 +125,13 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
               ),
               const SizedBox(height: 10),
 
-              // Quill Toolbar - Add this
+              // Quill Toolbar 
               quill.QuillSimpleToolbar(
                 controller: _quillController,
                 config: const quill.QuillSimpleToolbarConfig(),
               ),
 
-              // Quill Editor - Replace TextFormField
+              // Quill Editor
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
@@ -143,7 +143,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
               ),
               const SizedBox(height: 10),
 
-              // Tags - Add this
+              // Tags 
               Row(
                 children: [
                   Expanded(
@@ -165,7 +165,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
               ),
               const SizedBox(height: 10),
 
-              // Color picker - Add this
+              // Color picker
               SizedBox(
                 height: 40,
                 child: ListView.builder(
@@ -209,8 +209,8 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
   @override
   void dispose() {
     _titleController.dispose();
-    _quillController.dispose(); // Add this
-    _tagController.dispose(); // Add this
+    _quillController.dispose(); 
+    _tagController.dispose(); 
     super.dispose();
   }
 }
