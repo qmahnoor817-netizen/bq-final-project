@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/note.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill; // Add this
+import '../model/note.dart';
 
 class EditNoteScreen extends StatefulWidget {
   final Note note;
@@ -12,27 +14,62 @@ class EditNoteScreen extends StatefulWidget {
 
 class _EditNoteScreenState extends State<EditNoteScreen> {
   late TextEditingController _titleController;
-  late TextEditingController _contentController;
+  late quill.QuillController _quillController; // Changed from TextEditingController
   final _formKey = GlobalKey<FormState>();
+  final _tagController = TextEditingController(); // Add this
   var _isLoading = false;
+
+  late int _selectedColor; // Add this
+  late List<String> _selectedTags; // Add this
+  late bool _isPinned; // Add this
+
+  final List<Color> _noteColors = [ // Add this
+    Colors.white, Colors.red.shade100, Colors.orange.shade100, Colors.yellow.shade100,
+    Colors.green.shade100, Colors.blue.shade100, Colors.purple.shade100, Colors.pink.shade100,
+  ];
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.note.title);
-    _contentController = TextEditingController(text: widget.note.content);
+    _selectedColor = widget.note.color; // Add this
+    _selectedTags = List.from(widget.note.tags); // Add this
+    _isPinned = widget.note.isPinned; // Add this
+
+    // Load Quill content - Add this
+    try {
+      _quillController = quill.QuillController(
+        document: quill.Document.fromJson(jsonDecode(widget.note.content)),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+    } catch (_) {
+      _quillController = quill.QuillController.basic();
+    }
+  }
+
+  void _addTag() { // Add this
+    final tag = _tagController.text.trim();
+    if (tag.isNotEmpty &&!_selectedTags.contains(tag)) {
+      setState(() => _selectedTags.add(tag));
+      _tagController.clear();
+    }
   }
 
   void _updateNote() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
+    final contentJson = jsonEncode(_quillController.document.toDelta().toJson()); // Add this
+
     await FirebaseFirestore.instance
         .collection('notes')
         .doc(widget.note.id)
         .update({
       'title': _titleController.text.trim(),
-      'content': _contentController.text.trim(),
+      'content': contentJson, // Changed to JSON
+      'color': _selectedColor, // Add this
+      'tags': _selectedTags, // Add this
+      'isPinned': _isPinned, // Add this
     });
 
     if (mounted) Navigator.of(context).pop();
@@ -63,10 +100,14 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Note'),
+        title: const Text('Edit Note'), // Add this
         actions: [
+          IconButton( // Add pin button
+            icon: Icon(_isPinned? Icons.push_pin : Icons.push_pin_outlined),
+            onPressed: () => setState(() => _isPinned =!_isPinned),
+          ),
           IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red,),
+            icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: _deleteNote,
           ),
         ],
@@ -79,27 +120,97 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
                 validator: (val) => val!.isEmpty? 'Enter a title' : null,
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _contentController,
-                decoration: const InputDecoration(labelText: 'Content'),
-                maxLines: 10,
-                validator: (val) => val!.isEmpty? 'Enter content' : null,
+              const SizedBox(height: 10),
+
+              // Quill Toolbar - Add this
+              quill.QuillSimpleToolbar(
+                controller: _quillController,
+                config: const quill.QuillSimpleToolbarConfig(),
               ),
-              const SizedBox(height: 24),
+
+              // Quill Editor - Replace TextFormField
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+                  child: quill.QuillEditor.basic(
+                    controller: _quillController,
+                    config: const quill.QuillEditorConfig(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Tags - Add this
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _tagController,
+                      decoration: const InputDecoration(labelText: 'Add Tag', border: OutlineInputBorder()),
+                      onSubmitted: (_) => _addTag(),
+                    ),
+                  ),
+                  IconButton(icon: const Icon(Icons.add), onPressed: _addTag),
+                ],
+              ),
+              Wrap(
+                spacing: 6,
+                children: _selectedTags.map((tag) => Chip(
+                  label: Text(tag),
+                  onDeleted: () => setState(() => _selectedTags.remove(tag)),
+                )).toList(),
+              ),
+              const SizedBox(height: 10),
+
+              // Color picker - Add this
+              SizedBox(
+                height: 40,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _noteColors.length,
+                  itemBuilder: (ctx, i) => GestureDetector(
+                    onTap: () => setState(() => _selectedColor = _noteColors[i].value),
+                    child: Container(
+                      width: 40, margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: _noteColors[i], shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _selectedColor == _noteColors[i].value? Colors.black : Colors.grey,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               _isLoading
                   ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                onPressed: _updateNote,
-                child: const Text('Update Note'),
+                  : SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _updateNote,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                  child: const Text('Update Note', style: TextStyle(color: Colors.white)),
+                ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _quillController.dispose(); // Add this
+    _tagController.dispose(); // Add this
+    super.dispose();
   }
 }
